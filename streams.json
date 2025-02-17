@@ -1,0 +1,27 @@
+[
+    {
+        "name": "latin",
+        "genre": "latin",
+        "url": "http://latino.amgradio.ru/latino"
+    },
+    {
+        "name": "Cydonia",
+        "genre": "metaverse",
+        "url": "http://stream.s-config.com:8000/Cydonia"
+    },
+    {
+        "name": "Wild Country Radio",
+        "genre": "country",
+        "url": "https://digitalaudiobroadcasting.net:1060/stream"
+    },
+    {
+        "name": "Techno - NoSystem",
+        "genre": "techno",
+        "url": "http://nosystem.giize.com:2086/techno"
+    },
+    {
+        "name": "American Radio",
+        "genre": "rock",
+        "url": "https://c5.radioboss.fm:8224/autodj"
+    }
+]

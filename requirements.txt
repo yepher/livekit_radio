@@ -1,0 +1,11 @@
+aiofile~=3.8.8
+python-dotenv
+numpy
+ffmpeg-python
+
+
+livekit~=0.20.0
+livekit-agents~=0.12.13
+livekit-plugins-openai~=0.10.19
+livekit-plugins-deepgram~=0.6.19
+livekit-plugins-silero~=0.7.4
