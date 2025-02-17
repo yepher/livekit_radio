@@ -135,12 +135,14 @@ class IcecastStreamer:
                             # Read metadata length byte
                             meta_length_bytes = await resp.content.read(1)
                             if not meta_length_bytes:
+                                logger.debug("End of stream reached")
                                 break
                             meta_length = ord(meta_length_bytes) * 16
                             
                             # Read metadata if present
                             if meta_length > 0:
                                 metadata = await resp.content.read(meta_length)
+                                logger.debug("Received metadata: %s", metadata.decode('utf-8', errors='replace'))
                                 if self._metadata_callback is not None:
                                     meta_dict = self._parse_icy_metadata(metadata.decode('utf-8', errors='ignore'))
                                     await self._metadata_callback(meta_dict)
@@ -152,7 +154,9 @@ class IcecastStreamer:
                         chunk_size = min(4096, bytes_until_metadata) if bytes_until_metadata is not None else 4096
                         chunk = await resp.content.read(chunk_size)
                         if not chunk:
+                            logger.debug("End of stream reached")
                             break
+                        logger.debug("Read %d bytes from stream", len(chunk))
                         
                         if bytes_until_metadata is not None:
                             bytes_until_metadata -= len(chunk)
@@ -166,9 +170,13 @@ class IcecastStreamer:
                             break
 
         except (aiohttp.ClientError, asyncio.CancelledError, ConnectionError) as e:
-            logger.error("Stream error: %s", e)
+            logger.error("Stream error [%s]: %s. URL: %s", type(e).__name__, e, url)
+            if resp is not None:
+                logger.debug("HTTP status: %d, headers: %s", resp.status, dict(resp.headers))
+                
         except (RuntimeError) as e:
-            logger.error("FFmpeg stderr read failed: %s", e)
+            logger.error("FFmpeg processing failed [%s]: %s", type(e).__name__, e)
+            logger.debug("FFmpeg command: %s", " ".join(ffmpeg_process.args))
         finally:
             self._running = False
             if process_task is not None:

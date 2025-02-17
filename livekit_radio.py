@@ -24,7 +24,7 @@ from icecast_stream import IcecastStreamer
 from functions import load_streams, find_stream, format_metadata, SongHistory
 
 load_dotenv()
-logger = logging.getLogger("voice-assistant")
+logger = logging.getLogger("livekit-radio")
 
 ENABLE_COMFORT_NOISE = True
 SAMPLE_RATE = 48000
@@ -77,7 +77,7 @@ async def entrypoint(ctx: JobContext):
         # Get count of remaining participants (excluding the agent)
         remaining_participants = ctx.room.remote_participants
         remaining_count = len(remaining_participants)
-        
+
         logger.info("participant disconnected: %s", participant.identity)
         logger.info("There are %d users left", remaining_count)
 
