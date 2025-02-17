@@ -1,0 +1,43 @@
+sequenceDiagram
+    participant User as User (Participant)
+    participant LiveKit as LiveKit Room
+    participant Agent as Voice Agent
+    participant IcecastS as IcecastStreamer
+    participant FFmpeg as FFmpeg
+    participant Icecast as Icecast Server
+    participant Functions
+
+    User->>+LiveKit: Connect/Join Room
+    LiveKit->>+Agent: Participant Joined
+    Agent->>+IcecastS: Initialize
+    IcecastS->>+FFmpeg: Start Process
+    
+    loop Audio Streaming
+        IcecastS->>+Icecast: HTTP Stream Request
+        Icecast-->>-IcecastS: Audio + Metadata
+        IcecastS->>FFmpeg: Pipe Audio
+        FFmpeg-->>IcecastS: Processed PCM
+        IcecastS->>LiveKit: Publish Audio Frames
+        LiveKit->>User: Play Audio
+    end
+    
+    User->>+Agent: Voice Command
+    Agent->>+Functions: Parse Command
+    Functions->>+IcecastS: play_stream()/stop_stream()
+    IcecastS-->>-Functions: Status
+    Functions-->>-Agent: Response
+    Agent->>+Functions: get_current_song()
+    Functions->>+SongHistory: Query
+    SongHistory-->>-Functions: Current Song
+    Functions-->>-Agent: Response
+    Agent->>User: Speak Response
+    
+    Note over IcecastS,FFmpeg: Audio Processing
+    Note over Agent,Functions: NLP Handling
+    Note over IcecastS,Icecast: ICY Metadata Protocol
+    Note over Agent,LiveKit: RTC Audio Publishing
+
+    IcecastS-->>Functions: Metadata Update
+    Functions->>SongHistory: Update History
+    Functions->>LiveKit: Send Chat Message
+    LiveKit->>User: Display Metadata

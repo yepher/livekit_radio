@@ -14,6 +14,9 @@ This project is a proof of concept that creates an interactive voice assistant t
 - Track song history
 - Adjust volume automatically during conversations
 
+
+![sequence diagram](docs/sequenceDiagram.png)
+
 ## Key Components
 
 ### 1. Voice Assistant (livekit_radio.py)
