@@ -104,7 +104,7 @@ pip install -r requirements.txt
 2. Start the assistant:
 
 ```bash
-python livekit_radio.py
+python livekit_radio.py dev
 ```
 
 3. Connect to the LiveKit room and interact using voice commands:
