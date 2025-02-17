@@ -3,9 +3,13 @@
 Provides functions for loading stream data, finding streams by genre/name, 
 formatting metadata displays, and tracking song playback history."""
 
+import asyncio
 import json
 import logging
 import random
+from typing import Annotated
+from livekit.agents import llm
+from icecast_stream import IcecastStreamer
 
 logger = logging.getLogger("livekit-radio")
 
@@ -144,4 +148,54 @@ class SongHistory:
         """Get previous song info or default message"""
         if self.history:
             return f"♪ Previous song was: {self.history[-1]}"
-        return "No previous song information available" 
+        return "No previous song information available"
+
+class AssistantFnc(llm.FunctionContext):
+    """Voice assistant function context for radio streaming operations.
+    
+    Handles play/stop commands, song history tracking, and stream discovery
+    through LiveKit's function calling interface."""
+    
+    def __init__(self, streamer: IcecastStreamer, song_history: SongHistory):
+        super().__init__()
+        self.streamer = streamer
+        self.song_history = song_history
+        self.streams = load_streams()
+
+    @llm.ai_callable()
+    async def play_stream(
+        self,
+        query: Annotated[
+            str, llm.TypeInfo(description="Name or genre of stream to play")
+        ],
+    ):
+        """Play a radio stream by name or genre"""
+        name, url, match_type = find_stream(query, self.streams)
+        
+        if match_type == 'exact':
+            response = f"Playing {name}"
+        elif match_type == 'genre':
+            response = f"Playing {name} from the {query} genre"
+        elif match_type == 'suggestion':
+            response = f"I found a similar stream: {name}"
+        else:
+            response = f"I couldn't find that stream, playing {name} instead"
+            
+        asyncio.create_task(self.streamer.play(url))
+        return response
+
+    @llm.ai_callable()
+    async def stop_stream(self):
+        """Stop the currently playing radio stream"""
+        self.streamer.stop()
+        return "Stopping the music stream"
+
+    @llm.ai_callable()
+    async def get_current_song(self):
+        """Get information about the currently playing song"""
+        return self.song_history.get_current_song()
+
+    @llm.ai_callable()
+    async def get_previous_song(self):
+        """Get information about the previously played song"""
+        return self.song_history.get_previous_song() 

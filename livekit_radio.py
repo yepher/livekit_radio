@@ -21,7 +21,7 @@ from livekit.agents.pipeline import VoicePipelineAgent
 from livekit.plugins import deepgram, openai, silero
 
 from icecast_stream import IcecastStreamer
-from functions import load_streams, find_stream, format_metadata, SongHistory
+from functions import format_metadata, SongHistory, AssistantFnc
 
 load_dotenv()
 logger = logging.getLogger("livekit-radio")
@@ -37,9 +37,12 @@ DEFAULT_STREAMS = {
 SAMPLES_PER_FRAME = 960  # 20ms frames at 48kHz
 
 def prewarm(proc: JobProcess):
+    """"The stuff we want to do before the job starts"""
     proc.userdata["vad"] = silero.VAD.load()
 
 async def entrypoint(ctx: JobContext):
+    """The main entrypoint for the job"""
+    
     # Connect to the room FIRST
     logger.info("connecting to room %s", ctx.room.name)
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
@@ -170,56 +173,6 @@ async def entrypoint(ctx: JobContext):
             asyncio.create_task(answer_from_text(msg.message))
 
     await agent.say("Hey, I can play radio streams. Just ask!", allow_interruptions=True)
-
-class AssistantFnc(llm.FunctionContext):
-    """Voice assistant function context for radio streaming operations.
-    
-    Handles play/stop commands, song history tracking, and stream discovery
-    through LiveKit's function calling interface."""
-    
-    def __init__(self, streamer: IcecastStreamer, song_history: SongHistory):
-        super().__init__()
-        self.streamer = streamer
-        self.song_history = song_history
-        self.streams = load_streams()
-
-    @llm.ai_callable()
-    async def play_stream(
-        self,
-        query: Annotated[
-            str, llm.TypeInfo(description="Name or genre of stream to play")
-        ],
-    ):
-        """Play a radio stream by name or genre"""
-        name, url, match_type = find_stream(query, self.streams)
-        
-        if match_type == 'exact':
-            response = f"Playing {name}"
-        elif match_type == 'genre':
-            response = f"Playing {name} from the {query} genre"
-        elif match_type == 'suggestion':
-            response = f"I found a similar stream: {name}"
-        else:
-            response = f"I couldn't find that stream, playing {name} instead"
-            
-        asyncio.create_task(self.streamer.play(url))
-        return response
-
-    @llm.ai_callable()
-    async def stop_stream(self):
-        """Stop the currently playing radio stream"""
-        self.streamer.stop()
-        return "Stopping the music stream"
-
-    @llm.ai_callable()
-    async def get_current_song(self):
-        """Get information about the currently playing song"""
-        return self.song_history.get_current_song()
-
-    @llm.ai_callable()
-    async def get_previous_song(self):
-        """Get information about the previously played song"""
-        return self.song_history.get_previous_song()
 
 if __name__ == "__main__":
     cli.run_app(

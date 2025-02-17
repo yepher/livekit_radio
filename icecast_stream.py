@@ -156,7 +156,7 @@ class IcecastStreamer:
                         if not chunk:
                             logger.debug("End of stream reached")
                             break
-                        logger.debug("Read %d bytes from stream", len(chunk))
+                        # logger.debug("Read %d bytes from stream", len(chunk))
                         
                         if bytes_until_metadata is not None:
                             bytes_until_metadata -= len(chunk)
@@ -303,8 +303,8 @@ class IcecastStreamer:
                     time_since_last = current_time - last_frame_time
                     
                     # If we're falling behind, skip frames to catch up
-                    if time_since_last > frame_interval * 3:  # Increased from 2x
-                        logger.warning("Audio falling behind...")
+                    if time_since_last > frame_interval * 3:
+                        # logger.warning("Audio falling behind...")
                         if frame_queue.qsize() > 20:  # Increased backlog threshold
                             # Clear backlog
                             while not frame_queue.empty():
@@ -339,7 +339,7 @@ class IcecastStreamer:
                     
                     # Log stats periodically
                     frame_count += 1
-                    if frame_count % 100 == 0:
+                    if frame_count % 500 == 0:
                         logger.debug("Processed %d frames, queue size: %d", frame_count, frame_queue.qsize())
                         
                 except (queue.Empty, asyncio.TimeoutError):
